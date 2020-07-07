@@ -1,0 +1,19 @@
+{
+  "name": "phoenix-config",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "tsc": "tsc",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^26.1.0",
+    "prettier": "^2.0.5",
+    "tslint": "^6.1.2",
+    "typescript": "^3.9.6"
+  },
+  "dependencies": {
+    "@types/node": "^14.0.14"
+  }
+}
