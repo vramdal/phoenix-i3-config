@@ -1,12 +1,14 @@
 const path = "/Users/vramdal/Phoenix/phoenix-padding-master";
 
-require(path + "/constants.js");
-require(path + "/keys/movement.js");
-require(path + "/keys/focus.js");
-require(path + "/keys/info.js");
+/*
+import "./contants.js";
+import "./keys/movement.js";
+import "./keys/focus.js";
+import "./keys/info.js";
 
-import Phoenix, { Screen, Window, Key } from "phoenix";
-import Storage from "storage";
+
+import Phoenix, { Screen, Window, Key } from "Phoenix";
+import {Storage} from "Storage";
 
 Phoenix.set({
   openAtLogin: true,
@@ -14,7 +16,7 @@ Phoenix.set({
 
 const MODIFIERS = ["ctrl", "alt"];
 
-Key.on("z", MODIFIERS, function () {
+Key.on("z", MODIFIERS, () => {
   const screen = Screen.main().flippedVisibleFrame();
   const window = Window.focused();
 
@@ -26,15 +28,11 @@ Key.on("z", MODIFIERS, function () {
   }
 });
 
-const windowIsMaximised = function (window) {
-  return !!Storage.get(getWindowId(window));
-};
+const windowIsMaximised = window => !!Storage.get(getWindowId(window));
 
-const getWindowId = function (window) {
-  return "window-" + window.hash();
-};
+const getWindowId = window => "window-" + window.hash();
 
-Key.on("m", MODIFIERS, function () {
+Key.on("m", MODIFIERS, () => {
   const window = Window.focused();
 
   if (window) {
@@ -70,7 +68,7 @@ function focusClosestNeighbour(key) {
     down: "south",
     right: "east",
   };
-  return function () {
+  return () => {
     const window = Window.focused();
     const direction = directions[key];
     if (window) {
@@ -90,15 +88,14 @@ function focusClosestNeighbour(key) {
         point.y = rectangle.y + rectangle.height + 5;
       }
       const neighbours = window.neighbours(direction);
-      const neighbourNames = neighbours.map(function (neighbor) {
-        return neighbor.title();
-      });
+      const neighbourNames = neighbours.map(neighbor => neighbor.title());
       Phoenix.log(
         "Direction",
         direction,
         "neighbourNames",
         JSON.stringify(neighbourNames)
       );
+      // tslint:disable-next-line:prefer-for-of
       for (let i = 0; i < neighbours.length; i++) {
         const neighbour = neighbours[i];
         if (neighbour.isVisible()) {
@@ -118,8 +115,8 @@ function withFocusedWindow(wrapped) {
 }
 
 function setBookmark(key) {
-  return function () {
-    withFocusedWindow(function (window) {
+  return () => {
+    withFocusedWindow(window => {
       Phoenix.log("Setting bookmark " + key + " for window " + window.title());
       Storage.set("bookmark-" + key, window.hash());
       Phoenix.notify(
@@ -130,7 +127,7 @@ function setBookmark(key) {
 }
 
 function executeBookmark(key) {
-  return function () {
+  return () => {
     const windowHash = Storage.get("bookmark-" + key);
     const allWindows = Window.all();
     for (let i = 0; i < allWindows.length; i++) {
@@ -154,3 +151,4 @@ for (let i = 0; i < bookmarkKeys.length; i++) {
   Key.on(key, MODIFIERS, executeBookmark(key));
   Key.on(key, MODIFIERS.concat(["shift"]), setBookmark(key));
 }
+*/
