@@ -1,8 +1,10 @@
-import flatten from "lodash/flatten";
-import difference from "lodash/difference";
-import keyBy from "lodash/keyBy";
-import isEqual from "lodash/isEqual";
-import remove from "lodash/remove";
+import _ from "lodash";
+
+const flatten = _.flatten;
+const difference = _.difference;
+const keyBy = _.keyBy;
+const isEqual = _.isEqual;
+const remove = _.remove;
 
 interface Point {
   x: number;
@@ -122,6 +124,7 @@ type ContentRenderResultMap = { [contentId: number]: ContentRenderResult };
 type ContentContainerMap = { [contentId: number]: Container };
 
 export class Grid {
+  // Her er ne
   private rootContainer: HorizontalSplitContainer;
   private frame: Rectangle;
   private contentState: ContentRenderResultMap = {};
@@ -129,6 +132,7 @@ export class Grid {
   // private contentIds: number[];
 
   constructor(size: Size) {
+    Phoenix.log("Lager grid");
     this.frame = { ...size, x: 0, y: 0 };
     this.rootContainer = new HorizontalSplitContainer();
   }
@@ -136,6 +140,7 @@ export class Grid {
   onNewWindow(content: any, contentId: number): void {
     const contentContainer = new ContentContainer(content, contentId);
     this.contentContainerMap[contentId] = contentContainer;
+    Phoenix.log("Adding window", contentId, "Laks");
     this.rootContainer.addChild(contentContainer);
   }
 

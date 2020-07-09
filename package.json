@@ -5,7 +5,9 @@
   "license": "MIT",
   "scripts": {
     "tsc": "tsc",
-    "test": "jest"
+    "test": "jest",
+    "watch": "webpack --watch",
+    "build": "webpack"
   },
   "devDependencies": {
     "@types/jest": "^26.0.4",

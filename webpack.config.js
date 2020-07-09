@@ -14,12 +14,13 @@ module.exports = {
   },
   externals: {
     Phoenix: "Phoenix",
-    lodash: "lodash",
+    Key: "Key",
+    _: "_",
   },
   resolve: {
     modules: [
       path.resolve("./node_modules"),
-      path.resolve("./decs/Phoenix.d.ts"),
+      path.resolve("./decs/global.d.ts"),
     ],
     extensions: [".ts", ".tsx", ".js"],
   },

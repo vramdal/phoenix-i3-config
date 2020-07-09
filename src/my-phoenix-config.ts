@@ -3,9 +3,12 @@
 // import "./keys/focus.js";
 // import "./keys/info.js";
 
-import Phoenix, { Screen, Window, Key, Storage } from "Phoenix";
+// import Phoenix, { Screen, Window, Storage } from "Phoenix";
+// import { Key } from "Key";
 import { Grid } from "./grid/Grid";
 // import leftpad from "leftpad";
+
+// eval("Phoenix.log('Her logges det', JSON.stringify(Key))");
 
 Phoenix.set({
   openAtLogin: true,
@@ -15,11 +18,12 @@ const MODIFIERS = ["ctrl", "alt"];
 
 const grid = new Grid({ width: 500, height: 200 });
 
+// @ts-ignore
 Key.on("g", MODIFIERS, () => {
-  const screen = Screen.main().flippedVisibleFrame();
   const window: Window = Window.focused();
   // const str = leftpad("abc");
   // const a = str + "b";
+  // @ts-ignore
   grid.onNewWindow(window, window.hash());
 });
 
