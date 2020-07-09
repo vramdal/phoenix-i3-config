@@ -1,14 +1,11 @@
-const path = "/Users/vramdal/Phoenix/phoenix-padding-master";
+// import "./contants.js";
+// import "./keys/movement.js";
+// import "./keys/focus.js";
+// import "./keys/info.js";
 
-/*
-import "./contants.js";
-import "./keys/movement.js";
-import "./keys/focus.js";
-import "./keys/info.js";
-
-
-import Phoenix, { Screen, Window, Key } from "Phoenix";
-import {Storage} from "Storage";
+import Phoenix, { Screen, Window, Key, Storage } from "Phoenix";
+import { Grid } from "./grid/Grid";
+// import leftpad from "leftpad";
 
 Phoenix.set({
   openAtLogin: true,
@@ -16,6 +13,17 @@ Phoenix.set({
 
 const MODIFIERS = ["ctrl", "alt"];
 
+const grid = new Grid({ width: 500, height: 200 });
+
+Key.on("g", MODIFIERS, () => {
+  const screen = Screen.main().flippedVisibleFrame();
+  const window: Window = Window.focused();
+  // const str = leftpad("abc");
+  // const a = str + "b";
+  grid.onNewWindow(window, window.hash());
+});
+
+/*
 Key.on("z", MODIFIERS, () => {
   const screen = Screen.main().flippedVisibleFrame();
   const window = Window.focused();
@@ -28,9 +36,9 @@ Key.on("z", MODIFIERS, () => {
   }
 });
 
-const windowIsMaximised = window => !!Storage.get(getWindowId(window));
+const windowIsMaximised = (window) => !!Storage.get(getWindowId(window));
 
-const getWindowId = window => "window-" + window.hash();
+const getWindowId = (window) => "window-" + window.hash();
 
 Key.on("m", MODIFIERS, () => {
   const window = Window.focused();
@@ -88,7 +96,7 @@ function focusClosestNeighbour(key) {
         point.y = rectangle.y + rectangle.height + 5;
       }
       const neighbours = window.neighbours(direction);
-      const neighbourNames = neighbours.map(neighbor => neighbor.title());
+      const neighbourNames = neighbours.map((neighbor) => neighbor.title());
       Phoenix.log(
         "Direction",
         direction,
@@ -116,7 +124,7 @@ function withFocusedWindow(wrapped) {
 
 function setBookmark(key) {
   return () => {
-    withFocusedWindow(window => {
+    withFocusedWindow((window) => {
       Phoenix.log("Setting bookmark " + key + " for window " + window.title());
       Storage.set("bookmark-" + key, window.hash());
       Phoenix.notify(
@@ -130,6 +138,7 @@ function executeBookmark(key) {
   return () => {
     const windowHash = Storage.get("bookmark-" + key);
     const allWindows = Window.all();
+    // tslint:disable-next-line
     for (let i = 0; i < allWindows.length; i++) {
       const win = allWindows[i];
       if (win.hash() === windowHash) {
@@ -146,6 +155,7 @@ Key.on("up", MODIFIERS, focusClosestNeighbour("up"));
 Key.on("down", MODIFIERS, focusClosestNeighbour("down"));
 
 const bookmarkKeys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
+// tslint:disable-next-line
 for (let i = 0; i < bookmarkKeys.length; i++) {
   const key = bookmarkKeys[i];
   Key.on(key, MODIFIERS, executeBookmark(key));
