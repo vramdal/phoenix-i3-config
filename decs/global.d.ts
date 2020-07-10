@@ -161,7 +161,11 @@ declare class Timer implements Identifiable {
   static after: (interval: number, callback: () => void) => number;
   static every: (interval: number, callback: () => void) => number;
   static off: (identifier: number) => void;
-  constructor(interval: number, repeats: number, callback: () => void);
+  constructor(
+    interval: number,
+    repeats: boolean,
+    callback: (handler: any) => void
+  );
   stop: () => void;
   hash(): number;
   isEqual(anything: object): boolean;

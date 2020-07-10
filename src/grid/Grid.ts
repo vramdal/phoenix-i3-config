@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { EventSetup, EventListener } from "../EventSetup";
 
 const flatten = _.flatten;
 const difference = _.difference;
@@ -40,22 +41,22 @@ class EmptyContainer extends Container {
 */
 
 abstract class SplitContainer extends Container {
-  children: Container[] = [];
+  children: Item[] = [];
   orientation: "VERTICAL" | "HORIZONTAL";
 
-  addChild(container: Container): void {
-    this.children.push(container);
+  addChild(child: Item): void {
+    this.children.push(child);
   }
 
-  removeDescendant(container: Container): boolean {
+  removeDescendant(childToRemove: Item): boolean {
     for (const child of this.children) {
-      if (child === container) {
+      if (child === childToRemove) {
         remove(this.children, child);
         return true;
       }
       if (
         child instanceof SplitContainer &&
-        child.removeDescendant(container)
+        child.removeDescendant(childToRemove)
       ) {
         return true;
       }
@@ -73,7 +74,11 @@ class VerticalSplitContainer extends SplitContainer {
     const width = Math.floor(size.width / this.children.length);
     const arrayOfArrays = this.children.map((child, idx) => {
       const offset = width * idx;
-      return child.render({ x: absoluteFrame.x + offset, ...absoluteFrame });
+      return child.render({
+        ...absoluteFrame,
+        x: absoluteFrame.x + offset,
+        width,
+      });
     });
     return flatten(arrayOfArrays);
   }
@@ -87,7 +92,11 @@ class HorizontalSplitContainer extends SplitContainer {
     const height = Math.floor(size.height / this.children.length);
     const arrayOfArrays = this.children.map((child, idx) => {
       const offset = height * idx;
-      return child.render({ y: absoluteFrame.y + offset, ...absoluteFrame });
+      return child.render({
+        ...absoluteFrame,
+        y: absoluteFrame.y + offset,
+        height,
+      });
     });
     return flatten(arrayOfArrays);
   }
@@ -97,7 +106,7 @@ interface RenderResult {
   frame: Rectangle;
 }
 
-interface ContentRenderResult extends RenderResult {
+export interface ContentRenderResult extends RenderResult {
   contentId: number;
 }
 
@@ -107,49 +116,102 @@ const isContentRenderResult = (
   return renderResult.hasOwnProperty("contentId");
 };
 
-class ContentContainer extends Container {
+class Content {
   contentId: number;
+  private content: any;
 
   constructor(content: any, contentId: number) {
-    super();
     this.contentId = contentId;
+    this.content = content;
   }
 
   render(absoluteFrame: Rectangle): ContentRenderResult[] {
     return [{ frame: absoluteFrame, contentId: this.contentId }];
   }
+
+  getContent() {
+    return this.content;
+  }
 }
 
+type Item = Content | Container;
+
 type ContentRenderResultMap = { [contentId: number]: ContentRenderResult };
-type ContentContainerMap = { [contentId: number]: Container };
+type ContentContainerMap = { [contentId: number]: Content };
+
+export type PendingWindowOperations = {
+  removedContentIds: string[];
+  modifiedContentPositions: ContentRenderResult[];
+  newContentPositions: any[];
+};
 
 export class Grid {
   // Her er ne
   private rootContainer: HorizontalSplitContainer;
+  private acceptingContainer: SplitContainer;
   private frame: Rectangle;
+  // tslint:disable-next-line
+  private logger: (...args: any[]) => void = () => {};
   private contentState: ContentRenderResultMap = {};
   private contentContainerMap: ContentContainerMap = {};
+  private dirty = false;
+
+  private contentResizeNeededEvent = new EventSetup<PendingWindowOperations>(
+    "contentResizeNeeded"
+  );
   // private contentIds: number[];
 
-  constructor(size: Size) {
-    Phoenix.log("Lager grid");
+  constructor(
+    size: Size,
+    logger: (...args: any[]) => void = () => {
+      /* NOOP */
+    }
+  ) {
+    this.logger = logger;
+    this.logger("Lager grid");
     this.frame = { ...size, x: 0, y: 0 };
     this.rootContainer = new HorizontalSplitContainer();
+    this.acceptingContainer = this.rootContainer;
   }
 
-  onNewWindow(content: any, contentId: number): void {
-    const contentContainer = new ContentContainer(content, contentId);
+  addContainerForContent(content: any, contentId: number): void {
+    if (this.contentContainerMap.hasOwnProperty(contentId)) {
+      this.logger(`Content already in grid (${contentId})`);
+    }
+    const contentContainer = new Content(content, contentId);
     this.contentContainerMap[contentId] = contentContainer;
-    Phoenix.log("Adding window", contentId, "Laks");
-    this.rootContainer.addChild(contentContainer);
+    this.logger(`Adding content (${contentId})`);
+    this.acceptingContainer.addChild(contentContainer);
+    this.dirty = true;
   }
 
-  onWindowRemoved(contentId: number): void {
+  removeContainerForContent(contentId: number): void {
     const container = this.contentContainerMap[contentId];
-    this.rootContainer.removeDescendant(container);
+    if (container) {
+      this.logger(`Removing container for content (${contentId})`);
+      this.rootContainer.removeDescendant(container);
+      this.dirty = true;
+    } else {
+      this.logger(`Already removed content (${contentId})`);
+    }
   }
 
-  calculateChanges() {
+  onContentResizeNeeded(handler: EventListener<PendingWindowOperations>) {
+    this.contentResizeNeededEvent.addListener(handler);
+  }
+
+  getContentById(contentId: number): any {
+    return this.contentContainerMap[contentId].getContent();
+  }
+
+  calculateChanges(): PendingWindowOperations {
+    if (!this.dirty) {
+      return {
+        newContentPositions: [],
+        removedContentIds: [],
+        modifiedContentPositions: [],
+      };
+    }
     const newContentState: ContentRenderResultMap = keyBy(
       this.rootContainer.render(this.frame).filter(isContentRenderResult),
       (contentRenderResult) => contentRenderResult.contentId
@@ -177,6 +239,14 @@ export class Grid {
       (contentId) => this.contentState[contentId]
     );
 
-    return { newContentPositions, removedContentIds, modifiedContentPositions };
+    const result = {
+      newContentPositions,
+      removedContentIds,
+      modifiedContentPositions,
+    };
+    // Phoenix.log("result: " + result);
+    this.dirty = false;
+    this.contentResizeNeededEvent.fire(result);
+    return result;
   }
 }

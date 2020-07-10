@@ -3,9 +3,9 @@
 // import "./keys/focus.js";
 // import "./keys/info.js";
 
-// import Phoenix, { Screen, Window, Storage } from "Phoenix";
+// import Phoenix, { Screen, Window, Storage } from "global";
 // import { Key } from "Key";
-import { Grid } from "./grid/Grid";
+import { Grid, PendingWindowOperations } from "./grid/Grid";
 // import leftpad from "leftpad";
 
 // eval("Phoenix.log('Her logges det', JSON.stringify(Key))");
@@ -16,15 +16,111 @@ Phoenix.set({
 
 const MODIFIERS = ["ctrl", "alt"];
 
-const grid = new Grid({ width: 500, height: 200 });
+// @ts-ignore
+const mainScreenFrame = Screen.main().frame();
+
+const grid = new Grid(
+  {
+    width: mainScreenFrame.width,
+    height: mainScreenFrame.height,
+  },
+  (...args: any) => Phoenix.log(...args)
+);
+
+Timer.every(5, () => {
+  grid.calculateChanges();
+});
+
+grid.onContentResizeNeeded((operations: PendingWindowOperations) => {
+  Phoenix.log(
+    "Operasjoner: " +
+      operations.modifiedContentPositions.length +
+      operations.newContentPositions.length
+  );
+  for (const modifiedContentPosition of operations.modifiedContentPositions) {
+    const win = grid.getContentById(modifiedContentPosition.contentId);
+    Phoenix.log(
+      "Flytter vindu " +
+        win.title() +
+        " til " +
+        JSON.stringify(modifiedContentPosition)
+    );
+    win.setFrame(modifiedContentPosition.frame);
+    const modal = Modal.build({
+      origin: {
+        x: modifiedContentPosition.frame.x,
+        y: modifiedContentPosition.frame.y,
+      },
+      duration: 2,
+      animationDuration: 0.5,
+      appearance: "light",
+      text: "Added window to grid",
+    });
+    modal.show();
+  }
+  for (const newContentPosition of operations.newContentPositions) {
+    const win = grid.getContentById(newContentPosition.contentId);
+    /*
+    Phoenix.log(
+      "Flytter vindu " +
+        win.title() +
+        " til " +
+        JSON.stringify(newContentPosition)
+    );
+*/
+    win.setFrame(newContentPosition.frame);
+  }
+});
+
+// @ts-ignore
+Event.on("windowDidOpen", (window) => {
+  if (window.isNormal()) {
+    Phoenix.notify(
+      "Nytt vindu: " +
+        window.title() +
+        " isNormal? " +
+        (window.isNormal() ? "true" : "false")
+    );
+  }
+});
+
+// @ts-ignore
+Event.on("windowDidClose", (window) => {
+  grid.removeContainerForContent(window.hash());
+  if (window.isNormal()) {
+    const app: App = window.app();
+
+    Phoenix.notify(
+      "Vindu lukket" +
+        window.title() +
+        "(" +
+        app.name() +
+        ")" +
+        " isNormal? " +
+        (window.isNormal() ? "true" : "false")
+    );
+  }
+});
+
+// @ts-ignore
+Event.on("appDidLaunch", (app: App) => {
+  Phoenix.notify("appDidLaunch: " + app.name());
+});
+
+// @ts-ignore
+Event.on("windowDidResize", (window) => {
+  // @ts-ignore
+  Phoenix.notify("windowDidResize: " + window.title());
+});
 
 // @ts-ignore
 Key.on("g", MODIFIERS, () => {
+  // @ts-ignore
   const window: Window = Window.focused();
   // const str = leftpad("abc");
   // const a = str + "b";
   // @ts-ignore
-  grid.onNewWindow(window, window.hash());
+  grid.addContainerForContent(window, window.hash());
 });
 
 /*
