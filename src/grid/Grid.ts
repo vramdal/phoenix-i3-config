@@ -21,7 +21,12 @@ let containerCounter = 0;
 
 interface Rectangle extends Point, Size {}
 
-abstract class Container {
+interface Node {
+  toString(indent?: string): string;
+  render(absoluteFrame: Rectangle): RenderResult[];
+}
+
+abstract class Container implements Node {
   private containerId;
 
   constructor() {
@@ -48,14 +53,14 @@ enum Orientation {
 }
 
 abstract class SplitContainer extends Container {
-  children: Item[] = [];
+  children: Node[] = [];
   orientation: Orientation;
 
-  addChild(child: Item): void {
+  addChild(child: Node): void {
     this.children.push(child);
   }
 
-  removeDescendant(childToRemove: Item): boolean {
+  removeDescendant(childToRemove: Node): boolean {
     for (const child of this.children) {
       if (child === childToRemove) {
         remove(this.children, child);
@@ -132,7 +137,7 @@ const isContentRenderResult = (
   return renderResult.hasOwnProperty("contentId");
 };
 
-class Content {
+class Content implements Node {
   contentId: number;
   private content: any;
 
@@ -153,8 +158,6 @@ class Content {
     return `${indent}Content (id ${this.contentId})`;
   }
 }
-
-type Item = Content | Container;
 
 type ContentRenderResultMap = { [contentId: number]: ContentRenderResult };
 type ContentContainerMap = { [contentId: number]: Content };
