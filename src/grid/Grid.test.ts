@@ -1,4 +1,4 @@
-import { Grid } from "./Grid";
+import { Direction, Grid } from "./Grid";
 
 describe("Grid", () => {
   const onContentResizeNeededHandler = jest.fn();
@@ -42,6 +42,10 @@ describe("Grid", () => {
       -SplitContainer (HORIZONTAL)
       --Content (id 1)"
     `);
+    expect(grid.getFocusedNode()).toMatchObject({
+      containerId: "container-1",
+      parent: null,
+    });
   });
 
   it("should add a second window", () => {
@@ -116,5 +120,59 @@ describe("Grid", () => {
       -SplitContainer (HORIZONTAL)
       --Content (id 2)"
     `);
+  });
+
+  describe("focus", () => {
+    const focusMovedEventHandler = jest.fn();
+
+    beforeEach(() => {
+      jest.resetAllMocks();
+      grid.onFocusMoved(focusMovedEventHandler);
+    });
+
+    it("should move focus to next node", () => {
+      const window1 = grid.addContainerForContent("window 1", 1);
+      const window2 = grid.addContainerForContent("window 2", 2);
+      grid.setFocus(window1);
+
+      grid.moveFocus(Direction.SOUTH);
+
+      expect(grid.getFocusedNode()).toBe(window2);
+      expect(focusMovedEventHandler).toHaveBeenCalledWith(window2);
+    });
+
+    it("should move focus to previous node", () => {
+      const window1 = grid.addContainerForContent("window 1", 1);
+      const window2 = grid.addContainerForContent("window 2", 2);
+      grid.setFocus(window2);
+
+      grid.moveFocus(Direction.NORTH);
+
+      expect(grid.getFocusedNode()).toBe(window1);
+      expect(focusMovedEventHandler).toHaveBeenCalledWith(window1);
+    });
+
+    it("should move focus to parent node", () => {
+      const window1 = grid.addContainerForContent("window 1", 1);
+      grid.setFocus(window1);
+
+      grid.moveFocus(Direction.UP);
+
+      expect(grid.getFocusedNode()).toBe(grid.getRootContainer());
+      expect(focusMovedEventHandler).toHaveBeenCalledWith(
+        grid.getRootContainer()
+      );
+    });
+
+    it("should move focus to first child", () => {
+      const window1 = grid.addContainerForContent("window 1", 1);
+      grid.addContainerForContent("window 2", 2);
+      // Focus is on root container
+
+      grid.moveFocus(Direction.DOWN);
+
+      expect(grid.getFocusedNode()).toBe(window1);
+      expect(focusMovedEventHandler).toHaveBeenCalledWith(window1);
+    });
   });
 });

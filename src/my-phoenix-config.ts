@@ -5,7 +5,7 @@
 
 // import Phoenix, { Screen, Window, Storage } from "global";
 // import { Key } from "Key";
-import { Grid, PendingWindowOperations } from "./grid/Grid";
+import { Direction, Grid, PendingWindowOperations } from "./grid/Grid";
 // import leftpad from "leftpad";
 
 // eval("Phoenix.log('Her logges det', JSON.stringify(Key))");
@@ -72,6 +72,21 @@ grid.onContentResizeNeeded((operations: PendingWindowOperations) => {
   }
 });
 
+grid.onFocusMoved((focusNode) => {
+  Phoenix.log("Focus moved to " + focusNode.toString());
+  const modal = Modal.build({
+    origin: {
+      x: 0,
+      y: 0,
+    },
+    duration: 2,
+    animationDuration: 0.5,
+    appearance: "light",
+    text: "Focus on " + focusNode.toString(),
+  });
+  modal.show();
+});
+
 // @ts-ignore
 Event.on("windowDidOpen", (window) => {
   if (window.isNormal()) {
@@ -108,9 +123,9 @@ Event.on("appDidLaunch", (app: App) => {
 });
 
 // @ts-ignore
-Event.on("windowDidResize", (window) => {
+Event.on("windowDidResize", () => {
   // @ts-ignore
-  Phoenix.notify("windowDidResize: " + window.title());
+  // Phoenix.notify("windowDidResize: " + window.title());
 });
 
 // @ts-ignore
@@ -121,6 +136,27 @@ Key.on("g", MODIFIERS, () => {
   // const a = str + "b";
   // @ts-ignore
   grid.addContainerForContent(window, window.hash());
+});
+
+Key.on("j", MODIFIERS, () => {
+  grid.moveFocus(Direction.WEST);
+});
+Key.on("k", MODIFIERS, () => {
+  Phoenix.log("Focus north");
+  grid.moveFocus(Direction.NORTH);
+});
+Key.on("l", MODIFIERS, () => {
+  Phoenix.log("Focus south");
+  grid.moveFocus(Direction.SOUTH);
+});
+Key.on("ø", MODIFIERS, () => {
+  grid.moveFocus(Direction.EAST);
+});
+Key.on("h", MODIFIERS, () => {
+  grid.moveFocus(Direction.DOWN);
+});
+Key.on("æ", MODIFIERS, () => {
+  grid.moveFocus(Direction.UP);
 });
 
 /*
