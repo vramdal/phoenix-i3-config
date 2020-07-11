@@ -29,6 +29,8 @@ abstract class Container {
   }
 
   abstract render(absoluteFrame: Rectangle): RenderResult[];
+
+  abstract toString(indent?: string): string;
 }
 
 /*
@@ -40,9 +42,14 @@ class EmptyContainer extends Container {
 }
 */
 
+enum Orientation {
+  VERTICAL = "VERTICAL",
+  HORIZONTAL = "HORIZONTAL",
+}
+
 abstract class SplitContainer extends Container {
   children: Item[] = [];
-  orientation: "VERTICAL" | "HORIZONTAL";
+  orientation: Orientation;
 
   addChild(child: Item): void {
     this.children.push(child);
@@ -63,11 +70,20 @@ abstract class SplitContainer extends Container {
     }
     return false;
   }
+
+  toString(indent: string = ""): string {
+    return (
+      `${indent}SplitContainer (${this.orientation})\n` +
+      `${this.children
+        .map((child) => `${child.toString(`${indent}-`)}`)
+        .join("\n")}`
+    );
+  }
 }
 
 // noinspection JSUnusedLocalSymbols
 class VerticalSplitContainer extends SplitContainer {
-  orientation: "VERTICAL";
+  orientation = Orientation.VERTICAL;
 
   render(absoluteFrame: Rectangle): RenderResult[] {
     const size = { width: absoluteFrame.width, height: absoluteFrame.height };
@@ -85,7 +101,7 @@ class VerticalSplitContainer extends SplitContainer {
 }
 
 class HorizontalSplitContainer extends SplitContainer {
-  orientation: "HORIZONTAL";
+  orientation = Orientation.HORIZONTAL;
 
   render(absoluteFrame: Rectangle): RenderResult[] {
     const size = { width: absoluteFrame.width, height: absoluteFrame.height };
@@ -131,6 +147,10 @@ class Content {
 
   getContent() {
     return this.content;
+  }
+
+  toString(indent?: string) {
+    return `${indent}Content (id ${this.contentId})`;
   }
 }
 
@@ -202,6 +222,11 @@ export class Grid {
 
   getContentById(contentId: number): any {
     return this.contentContainerMap[contentId].getContent();
+  }
+
+  toString() {
+    return `Grid
+${this.rootContainer.toString("-")}`;
   }
 
   calculateChanges(): PendingWindowOperations {

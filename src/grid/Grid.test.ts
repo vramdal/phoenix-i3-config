@@ -37,6 +37,11 @@ describe("Grid", () => {
         removedContentIds: [],
       })
     );
+    expect(grid.toString()).toMatchInlineSnapshot(`
+      "Grid
+      -SplitContainer (HORIZONTAL)
+      --Content (id 1)"
+    `);
   });
 
   it("should add a second window", () => {
@@ -73,6 +78,12 @@ describe("Grid", () => {
         removedContentIds: [],
       })
     );
+    expect(grid.toString()).toMatchInlineSnapshot(`
+      "Grid
+      -SplitContainer (HORIZONTAL)
+      --Content (id 1)
+      --Content (id 2)"
+    `);
   });
 
   it("should remove a window", () => {
@@ -100,5 +111,10 @@ describe("Grid", () => {
         removedContentIds: ["1"],
       })
     );
+    expect(grid.toString()).toMatchInlineSnapshot(`
+      "Grid
+      -SplitContainer (HORIZONTAL)
+      --Content (id 2)"
+    `);
   });
 });
