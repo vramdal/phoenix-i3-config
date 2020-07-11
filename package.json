@@ -5,13 +5,19 @@
   "license": "MIT",
   "scripts": {
     "tsc": "tsc",
-    "test": "jest",
+    "test": "jest src",
     "watch": "webpack --watch",
     "build": "webpack"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn test"
+    }
   },
   "devDependencies": {
     "@types/jest": "^26.0.4",
     "babel-jest": "^26.1.0",
+    "husky": "^4.2.5",
     "jest": "^26.1.0",
     "lodash": "^4.17.19",
     "prettier": "^2.0.5",
