@@ -24,18 +24,28 @@ interface Rectangle extends Point, Size {}
 interface Node {
   toString(indent?: string): string;
   render(absoluteFrame: Rectangle): RenderResult[];
+  getParent(): Container | null;
+  getChildren(): Node[];
 }
 
 abstract class Container implements Node {
   private containerId;
+  private parent: Container | null;
 
-  constructor() {
+  constructor(parent: Container) {
     this.containerId = `container-${containerCounter++}`;
+    this.parent = parent;
   }
 
   abstract render(absoluteFrame: Rectangle): RenderResult[];
 
   abstract toString(indent?: string): string;
+
+  getParent(): Container | null {
+    return this.parent;
+  }
+
+  abstract getChildren(): Node[];
 }
 
 /*
@@ -47,17 +57,50 @@ class EmptyContainer extends Container {
 }
 */
 
-enum Orientation {
+export enum Orientation {
   VERTICAL = "VERTICAL",
   HORIZONTAL = "HORIZONTAL",
 }
 
+export enum Direction {
+  NORTH = "NORTH",
+  SOUTH = "SOUTH",
+  WEST = "WEST",
+  EAST = "EAST",
+  UP = "UP",
+  DOWN = "DOWN",
+}
+
+const swapPositions = <T>(originalArray: T[], a: number, b: number) => {
+  const array = [...originalArray];
+  [array[a], array[b]] = [array[b], array[a]];
+  return array;
+};
 abstract class SplitContainer extends Container {
   children: Node[] = [];
   orientation: Orientation;
 
   addChild(child: Node): void {
     this.children.push(child);
+  }
+
+  getChildren(): Node[] {
+    return this.children;
+  }
+
+  reOrderChild(childToMove: Node, position: number) {
+    const childIndex = this.children.findIndex(
+      (child) => child === childToMove
+    );
+    if (
+      childIndex + position > 0 &&
+      childIndex + position < this.children.length - 1
+    )
+      this.children = swapPositions(
+        this.children,
+        childIndex,
+        childIndex + position
+      );
   }
 
   removeDescendant(childToRemove: Node): boolean {
@@ -140,10 +183,12 @@ const isContentRenderResult = (
 class Content implements Node {
   contentId: number;
   private content: any;
+  private parent: Container;
 
-  constructor(content: any, contentId: number) {
+  constructor(content: any, contentId: number, parent: Container) {
     this.contentId = contentId;
     this.content = content;
+    this.parent = parent;
   }
 
   render(absoluteFrame: Rectangle): ContentRenderResult[] {
@@ -154,8 +199,16 @@ class Content implements Node {
     return this.content;
   }
 
+  getChildren(): Node[] {
+    return [];
+  }
+
   toString(indent?: string) {
     return `${indent}Content (id ${this.contentId})`;
+  }
+
+  getParent(): Container | null {
+    return this.parent;
   }
 }
 
@@ -172,6 +225,7 @@ export class Grid {
   // Her er ne
   private rootContainer: HorizontalSplitContainer;
   private acceptingContainer: SplitContainer;
+  private focusedNode: Node;
   private frame: Rectangle;
   // tslint:disable-next-line
   private logger: (...args: any[]) => void = () => {};
@@ -182,6 +236,7 @@ export class Grid {
   private contentResizeNeededEvent = new EventSetup<PendingWindowOperations>(
     "contentResizeNeeded"
   );
+  private focusMovedEvent = new EventSetup<Node>("focusMoved");
   // private contentIds: number[];
 
   constructor(
@@ -193,19 +248,29 @@ export class Grid {
     this.logger = logger;
     this.logger("Lager grid");
     this.frame = { ...size, x: 0, y: 0 };
-    this.rootContainer = new HorizontalSplitContainer();
+    this.rootContainer = new HorizontalSplitContainer(null);
     this.acceptingContainer = this.rootContainer;
+    this.focusedNode = this.rootContainer;
   }
 
-  addContainerForContent(content: any, contentId: number): void {
+  addContainerForContent(content: any, contentId: number): Node {
     if (this.contentContainerMap.hasOwnProperty(contentId)) {
       this.logger(`Content already in grid (${contentId})`);
     }
-    const contentContainer = new Content(content, contentId);
+    const contentContainer = new Content(
+      content,
+      contentId,
+      this.acceptingContainer
+    );
     this.contentContainerMap[contentId] = contentContainer;
     this.logger(`Adding content (${contentId})`);
     this.acceptingContainer.addChild(contentContainer);
     this.dirty = true;
+    return contentContainer;
+  }
+
+  getRootContainer(): Container {
+    return this.rootContainer;
   }
 
   removeContainerForContent(contentId: number): void {
@@ -223,8 +288,66 @@ export class Grid {
     this.contentResizeNeededEvent.addListener(handler);
   }
 
+  onFocusMoved(handler: EventListener<Node>) {
+    this.focusMovedEvent.addListener(handler);
+  }
+
   getContentById(contentId: number): any {
     return this.contentContainerMap[contentId].getContent();
+  }
+
+  getFocusedNode(): Node {
+    return this.focusedNode;
+  }
+
+  setFocus(node: Node) {
+    this.focusedNode = node;
+  }
+
+  moveFocus(direction: Direction) {
+    const parentContainer: Container = this.focusedNode.getParent();
+    let delta = 0;
+    const previouslyFocusedNode = this.focusedNode;
+    if (parentContainer instanceof SplitContainer) {
+      if (direction === Direction.UP) {
+        this.focusedNode = this.focusedNode.getParent() || this.focusedNode;
+      } else if (
+        parentContainer.orientation === Orientation.HORIZONTAL &&
+        direction !== Direction.NORTH &&
+        direction !== Direction.SOUTH
+      ) {
+        return; // TODO
+      } else if (
+        parentContainer.orientation === Orientation.VERTICAL &&
+        direction !== Direction.EAST &&
+        direction !== Direction.WEST
+      ) {
+        return; // TODO
+      } else {
+        const children = parentContainer.getChildren();
+        delta =
+          direction === Direction.EAST || direction === Direction.SOUTH
+            ? 1
+            : -1;
+        const childIndex = children.findIndex(
+          (child) => child === this.focusedNode
+        );
+        const newFocusedChildIndex = childIndex + delta;
+        if (
+          newFocusedChildIndex >= 0 &&
+          newFocusedChildIndex <= children.length - 1
+        ) {
+          this.focusedNode = children[newFocusedChildIndex];
+        }
+      }
+    } else if (direction === Direction.DOWN) {
+      const children = this.focusedNode.getChildren();
+      this.focusedNode =
+        (children.length > 0 && children[0]) || this.focusedNode;
+    }
+    if (previouslyFocusedNode !== this.focusedNode) {
+      this.focusMovedEvent.fire(this.focusedNode);
+    }
   }
 
   toString() {
