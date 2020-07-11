@@ -27,7 +27,7 @@ const grid = new Grid<PhoenixWindow>(
   (...args: any) => Phoenix.log(...args)
 );
 
-Timer.every(5, () => {
+Timer.every(0.2, () => {
   grid.calculateChanges();
 });
 
@@ -62,14 +62,6 @@ grid.onContentResizeNeeded((operations: PendingWindowOperations) => {
   }
   for (const newContentPosition of operations.newContentPositions) {
     const win = grid.getContentById(newContentPosition.contentId);
-    /*
-    Phoenix.log(
-      "Flytter vindu " +
-        win.title() +
-        " til " +
-        JSON.stringify(newContentPosition)
-    );
-*/
     win.setFrame(newContentPosition.frame);
   }
 });
@@ -88,7 +80,7 @@ grid.onFocusMoved((focusNode) => {
   });
   modal.show();
   if (focusNode instanceof Content) {
-    focusNode.getContent();
+    focusNode.getContent().focus();
   }
 });
 
@@ -151,7 +143,6 @@ Key.on("k", MODIFIERS, () => {
   grid.moveFocus(Direction.NORTH);
 });
 Key.on("l", MODIFIERS, () => {
-  Phoenix.log("Focus south");
   grid.moveFocus(Direction.SOUTH);
 });
 Key.on("ø", MODIFIERS, () => {
@@ -162,6 +153,18 @@ Key.on("h", MODIFIERS, () => {
 });
 Key.on("æ", MODIFIERS, () => {
   grid.moveFocus(Direction.UP);
+});
+Key.on("left", MODIFIERS, () => {
+  grid.moveNode(Direction.WEST);
+});
+Key.on("up", MODIFIERS, () => {
+  grid.moveNode(Direction.NORTH);
+});
+Key.on("down", MODIFIERS, () => {
+  grid.moveNode(Direction.SOUTH);
+});
+Key.on("right", MODIFIERS, () => {
+  grid.moveNode(Direction.EAST);
 });
 
 /*

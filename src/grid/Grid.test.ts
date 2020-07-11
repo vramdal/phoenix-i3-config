@@ -2,7 +2,7 @@ import { Direction, Grid } from "./Grid";
 
 describe("Grid", () => {
   const onContentResizeNeededHandler = jest.fn();
-  let grid: Grid;
+  let grid: Grid<string>;
 
   beforeEach(() => {
     jest.resetAllMocks();
@@ -173,6 +173,70 @@ describe("Grid", () => {
 
       expect(grid.getFocusedNode()).toBe(window1);
       expect(focusMovedEventHandler).toHaveBeenCalledWith(window1);
+    });
+  });
+
+  describe("move nodes", () => {
+    const contentResizeNeededHandler = jest.fn();
+
+    beforeEach(() => {
+      jest.resetAllMocks();
+      grid.onContentResizeNeeded(contentResizeNeededHandler);
+    });
+
+    it("should move a node backward", () => {
+      grid.addContainerForContent("window 1", 1);
+      const window2 = grid.addContainerForContent("window 2", 2);
+      grid.setFocus(window2);
+      grid.calculateChanges();
+
+      grid.moveNode(Direction.NORTH);
+      grid.calculateChanges();
+
+      expect(contentResizeNeededHandler).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          modifiedContentPositions: expect.arrayContaining([
+            { contentId: 1, frame: { height: 1, width: 5, x: 0, y: 1 } },
+            { contentId: 2, frame: { height: 1, width: 5, x: 0, y: 0 } },
+          ]),
+          newContentPositions: [],
+          removedContentIds: [],
+        })
+      );
+      expect(grid.toString()).toMatchInlineSnapshot(`
+        "Grid
+        -SplitContainer (HORIZONTAL)
+        --Content (id 2)
+        --Content (id 1)"
+      `);
+    });
+    it("should move a node forward", () => {
+      const window1 = grid.addContainerForContent("window 1", 1);
+      grid.addContainerForContent("window 2", 2);
+      grid.setFocus(window1);
+      grid.calculateChanges();
+
+      grid.moveNode(Direction.SOUTH);
+      grid.calculateChanges();
+
+      expect(contentResizeNeededHandler).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          modifiedContentPositions: expect.arrayContaining([
+            { contentId: 1, frame: { height: 1, width: 5, x: 0, y: 1 } },
+            { contentId: 2, frame: { height: 1, width: 5, x: 0, y: 0 } },
+          ]),
+          newContentPositions: [],
+          removedContentIds: [],
+        })
+      );
+      expect(grid.toString()).toMatchInlineSnapshot(`
+        "Grid
+        -SplitContainer (HORIZONTAL)
+        --Content (id 2)
+        --Content (id 1)"
+      `);
     });
   });
 });

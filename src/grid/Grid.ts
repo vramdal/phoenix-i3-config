@@ -46,6 +46,8 @@ export abstract class Container implements Node {
   }
 
   abstract getChildren(): Node[];
+
+  abstract reOrderChild(childToMove: Node, position: number): void;
 }
 
 /*
@@ -88,19 +90,21 @@ abstract class SplitContainer extends Container {
     return this.children;
   }
 
-  reOrderChild(childToMove: Node, position: number) {
+  reOrderChild(childToMove: Node, position: number): boolean {
+    const originalChildren = this.children;
     const childIndex = this.children.findIndex(
       (child) => child === childToMove
     );
     if (
-      childIndex + position > 0 &&
-      childIndex + position < this.children.length - 1
+      childIndex + position >= 0 &&
+      childIndex + position <= this.children.length - 1
     )
       this.children = swapPositions(
         this.children,
         childIndex,
         childIndex + position
       );
+    return originalChildren !== this.children;
   }
 
   removeDescendant(childToRemove: Node): boolean {
@@ -349,6 +353,28 @@ export class Grid<ContentType> {
     }
     if (previouslyFocusedNode !== this.focusedNode) {
       this.focusMovedEvent.fire(this.focusedNode);
+    }
+  }
+
+  moveNode(direction: Direction) {
+    const focusParent = this.focusedNode.getParent();
+    this.logger("Flytter node " + direction);
+    if (focusParent instanceof SplitContainer) {
+      if (
+        (focusParent.orientation === Orientation.HORIZONTAL &&
+          (direction === Direction.NORTH || direction === Direction.SOUTH)) ||
+        (focusParent.orientation === Orientation.VERTICAL &&
+          (direction === Direction.WEST || direction === Direction.EAST))
+      ) {
+        const delta =
+          direction === Direction.NORTH || direction === Direction.WEST
+            ? -1
+            : 1;
+        const modified = focusParent.reOrderChild(this.focusedNode, delta);
+        if (modified) {
+          this.dirty = true;
+        }
+      }
     }
   }
 
