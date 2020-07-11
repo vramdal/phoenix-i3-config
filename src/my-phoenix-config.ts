@@ -5,7 +5,7 @@
 
 // import Phoenix, { Screen, Window, Storage } from "global";
 // import { Key } from "Key";
-import { Direction, Grid, PendingWindowOperations } from "./grid/Grid";
+import { Content, Direction, Grid, PendingWindowOperations } from "./grid/Grid";
 // import leftpad from "leftpad";
 
 // eval("Phoenix.log('Her logges det', JSON.stringify(Key))");
@@ -19,7 +19,7 @@ const MODIFIERS = ["ctrl", "alt"];
 // @ts-ignore
 const mainScreenFrame = Screen.main().frame();
 
-const grid = new Grid(
+const grid = new Grid<PhoenixWindow>(
   {
     width: mainScreenFrame.width,
     height: mainScreenFrame.height,
@@ -38,7 +38,9 @@ grid.onContentResizeNeeded((operations: PendingWindowOperations) => {
       operations.newContentPositions.length
   );
   for (const modifiedContentPosition of operations.modifiedContentPositions) {
-    const win = grid.getContentById(modifiedContentPosition.contentId);
+    const win: PhoenixWindow = grid.getContentById(
+      modifiedContentPosition.contentId
+    );
     Phoenix.log(
       "Flytter vindu " +
         win.title() +
@@ -85,6 +87,9 @@ grid.onFocusMoved((focusNode) => {
     text: "Focus on " + focusNode.toString(),
   });
   modal.show();
+  if (focusNode instanceof Content) {
+    focusNode.getContent();
+  }
 });
 
 // @ts-ignore

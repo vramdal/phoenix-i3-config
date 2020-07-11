@@ -28,7 +28,7 @@ interface Node {
   getChildren(): Node[];
 }
 
-abstract class Container implements Node {
+export abstract class Container implements Node {
   private containerId;
   private parent: Container | null;
 
@@ -180,9 +180,9 @@ const isContentRenderResult = (
   return renderResult.hasOwnProperty("contentId");
 };
 
-class Content implements Node {
+export class Content<ContentType> implements Node {
   contentId: number;
-  private content: any;
+  private content: ContentType;
   private parent: Container;
 
   constructor(content: any, contentId: number, parent: Container) {
@@ -195,7 +195,7 @@ class Content implements Node {
     return [{ frame: absoluteFrame, contentId: this.contentId }];
   }
 
-  getContent() {
+  getContent(): ContentType {
     return this.content;
   }
 
@@ -213,7 +213,9 @@ class Content implements Node {
 }
 
 type ContentRenderResultMap = { [contentId: number]: ContentRenderResult };
-type ContentContainerMap = { [contentId: number]: Content };
+type ContentContainerMap<ContentType> = {
+  [contentId: number]: Content<ContentType>;
+};
 
 export type PendingWindowOperations = {
   removedContentIds: string[];
@@ -221,7 +223,7 @@ export type PendingWindowOperations = {
   newContentPositions: any[];
 };
 
-export class Grid {
+export class Grid<ContentType> {
   // Her er ne
   private rootContainer: HorizontalSplitContainer;
   private acceptingContainer: SplitContainer;
@@ -230,7 +232,7 @@ export class Grid {
   // tslint:disable-next-line
   private logger: (...args: any[]) => void = () => {};
   private contentState: ContentRenderResultMap = {};
-  private contentContainerMap: ContentContainerMap = {};
+  private contentContainerMap: ContentContainerMap<ContentType> = {};
   private dirty = false;
 
   private contentResizeNeededEvent = new EventSetup<PendingWindowOperations>(
@@ -253,11 +255,11 @@ export class Grid {
     this.focusedNode = this.rootContainer;
   }
 
-  addContainerForContent(content: any, contentId: number): Node {
+  addContainerForContent(content: ContentType, contentId: number): Node {
     if (this.contentContainerMap.hasOwnProperty(contentId)) {
       this.logger(`Content already in grid (${contentId})`);
     }
-    const contentContainer = new Content(
+    const contentContainer = new Content<ContentType>(
       content,
       contentId,
       this.acceptingContainer
@@ -292,7 +294,7 @@ export class Grid {
     this.focusMovedEvent.addListener(handler);
   }
 
-  getContentById(contentId: number): any {
+  getContentById(contentId: number): ContentType {
     return this.contentContainerMap[contentId].getContent();
   }
 

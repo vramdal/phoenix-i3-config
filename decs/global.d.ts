@@ -116,9 +116,9 @@ declare class Rectangle {
 
 // @ts-ignore
 // noinspection JSAnnotator
-declare class Screen implements Identifiable, Iterable {
-  static main: () => Screen;
-  static all: () => Screen[];
+declare class PhoenixScreen implements Identifiable, Iterable {
+  static main: () => PhoenixScreen;
+  static all: () => PhoenixScreen[];
 
   identifier: () => string;
   frame: () => Rectangle;
@@ -127,12 +127,15 @@ declare class Screen implements Identifiable, Iterable {
   flippedVisibleFrame: () => Rectangle;
   currentSpace: () => Space; // macOS 10.11+
   spaces: () => Space[]; // macOS 10.11+
-  windows: (optionals: { [key: string]: any }) => Window[];
+  windows: (optionals: { [key: string]: any }) => PhoenixWindow[];
   hash(): number;
   isEqual(anything: object): boolean;
   next(): object;
   previous(): object;
 }
+
+// @ts-ignore
+declare type Screen = PhoenixScreen;
 
 declare class Size {
   width: number;
@@ -172,7 +175,7 @@ declare class Timer implements Identifiable {
 }
 
 // @ts-ignore
-declare class Window implements Identifiable {
+declare class PhoenixWindow implements Identifiable {
   static focused: () => Window;
   static at: (point: Point) => Window;
   static all: (optionals?: { [key: string]: any }) => Window[];
@@ -208,11 +211,16 @@ declare class Window implements Identifiable {
 }
 
 // @ts-ignore
-declare class Storage {
+declare type Window = PhoenixWindow;
+
+declare class PhoenixStorage {
   static set: (key: string, value: any) => void;
   static get: (key: string) => any;
   static remove: (key: string) => void;
 }
+
+// @ts-ignore
+declare type Storage = PhoenixStorage;
 
 declare class Task implements Identifiable {
   hash(): number;
