@@ -17,18 +17,22 @@ Phoenix.set({
 const MODIFIERS = ["ctrl", "alt"];
 
 // @ts-ignore
-const mainScreenFrame = Screen.main().frame();
+const mainScreenFrame = Screen.main().flippedFrame();
 
-const grid = new Grid<PhoenixWindow>(
-  {
-    width: mainScreenFrame.width,
-    height: mainScreenFrame.height,
-  },
-  (...args: any) => Phoenix.log(...args)
+Phoenix.log("New grid at " + JSON.stringify(mainScreenFrame));
+
+const grid = new Grid<PhoenixWindow>(mainScreenFrame, (...args: any) =>
+  Phoenix.log(...args)
 );
 
 Timer.every(0.2, () => {
   grid.calculateChanges();
+  // @ts-ignore
+  const focusedWindow = Window.focused();
+  // Phoenix.log(
+  //   "Fokus på " + focusedWindow.title() + "(" + focusedWindow.hash() + ")"
+  // );
+  grid.setFocus(focusedWindow && focusedWindow.hash());
 });
 
 grid.onContentResizeNeeded((operations: PendingWindowOperations) => {

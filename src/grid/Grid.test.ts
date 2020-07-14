@@ -6,7 +6,7 @@ describe("Grid", () => {
 
   beforeEach(() => {
     jest.resetAllMocks();
-    grid = new Grid({ width: 5, height: 3 });
+    grid = new Grid({ width: 5, height: 3, x: 0, y: 0 });
     grid.onContentResizeNeeded(onContentResizeNeededHandler);
   });
 

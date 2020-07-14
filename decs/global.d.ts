@@ -176,12 +176,12 @@ declare class Timer implements Identifiable {
 
 // @ts-ignore
 declare class PhoenixWindow implements Identifiable {
-  static focused: () => Window;
-  static at: (point: Point) => Window;
-  static all: (optionals?: { [key: string]: any }) => Window[];
-  static recent: () => Window[];
+  static focused: () => PhoenixWindow;
+  static at: (point: Point) => PhoenixWindow;
+  static all: (optionals?: { [key: string]: any }) => PhoenixWindow[];
+  static recent: () => PhoenixWindow[];
 
-  others: (optionals: { [key: string]: any }) => Window[];
+  others: (optionals: { [key: string]: any }) => PhoenixWindow[];
   title: () => string;
   isMain: () => boolean;
   isNormal: () => boolean;

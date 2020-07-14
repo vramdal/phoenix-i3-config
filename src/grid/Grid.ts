@@ -21,14 +21,14 @@ let containerCounter = 0;
 
 interface Rectangle extends Point, Size {}
 
-interface Node {
+interface GridNode {
   toString(indent?: string): string;
   render(absoluteFrame: Rectangle): RenderResult[];
   getParent(): Container | null;
-  getChildren(): Node[];
+  getChildren(): GridNode[];
 }
 
-export abstract class Container implements Node {
+export abstract class Container implements GridNode {
   private containerId;
   private parent: Container | null;
 
@@ -45,9 +45,9 @@ export abstract class Container implements Node {
     return this.parent;
   }
 
-  abstract getChildren(): Node[];
+  abstract getChildren(): GridNode[];
 
-  abstract reOrderChild(childToMove: Node, position: number): void;
+  abstract reOrderChild(childToMove: GridNode, position: number): void;
 }
 
 /*
@@ -79,18 +79,18 @@ const swapPositions = <T>(originalArray: T[], a: number, b: number) => {
   return array;
 };
 abstract class SplitContainer extends Container {
-  children: Node[] = [];
+  children: GridNode[] = [];
   orientation: Orientation;
 
-  addChild(child: Node): void {
+  addChild(child: GridNode): void {
     this.children.push(child);
   }
 
-  getChildren(): Node[] {
+  getChildren(): GridNode[] {
     return this.children;
   }
 
-  reOrderChild(childToMove: Node, position: number): boolean {
+  reOrderChild(childToMove: GridNode, position: number): boolean {
     const originalChildren = this.children;
     const childIndex = this.children.findIndex(
       (child) => child === childToMove
@@ -107,7 +107,7 @@ abstract class SplitContainer extends Container {
     return originalChildren !== this.children;
   }
 
-  removeDescendant(childToRemove: Node): boolean {
+  removeDescendant(childToRemove: GridNode): boolean {
     for (const child of this.children) {
       if (child === childToRemove) {
         remove(this.children, child);
@@ -184,7 +184,7 @@ const isContentRenderResult = (
   return renderResult.hasOwnProperty("contentId");
 };
 
-export class Content<ContentType> implements Node {
+export class Content<ContentType> implements GridNode {
   contentId: number;
   private content: ContentType;
   private parent: Container;
@@ -203,7 +203,7 @@ export class Content<ContentType> implements Node {
     return this.content;
   }
 
-  getChildren(): Node[] {
+  getChildren(): GridNode[] {
     return [];
   }
 
@@ -231,7 +231,7 @@ export class Grid<ContentType> {
   // Her er ne
   private rootContainer: HorizontalSplitContainer;
   private acceptingContainer: SplitContainer;
-  private focusedNode: Node;
+  private focusedNode: GridNode;
   private frame: Rectangle;
   // tslint:disable-next-line
   private logger: (...args: any[]) => void = () => {};
@@ -242,24 +242,24 @@ export class Grid<ContentType> {
   private contentResizeNeededEvent = new EventSetup<PendingWindowOperations>(
     "contentResizeNeeded"
   );
-  private focusMovedEvent = new EventSetup<Node>("focusMoved");
+  private focusMovedEvent = new EventSetup<GridNode>("focusMoved");
   // private contentIds: number[];
 
   constructor(
-    size: Size,
+    frame: Rectangle,
     logger: (...args: any[]) => void = () => {
       /* NOOP */
     }
   ) {
     this.logger = logger;
     this.logger("Lager grid");
-    this.frame = { ...size, x: 0, y: 0 };
+    this.frame = frame;
     this.rootContainer = new HorizontalSplitContainer(null);
     this.acceptingContainer = this.rootContainer;
     this.focusedNode = this.rootContainer;
   }
 
-  addContainerForContent(content: ContentType, contentId: number): Node {
+  addContainerForContent(content: ContentType, contentId: number): GridNode {
     if (this.contentContainerMap.hasOwnProperty(contentId)) {
       this.logger(`Content already in grid (${contentId})`);
     }
@@ -294,20 +294,31 @@ export class Grid<ContentType> {
     this.contentResizeNeededEvent.addListener(handler);
   }
 
-  onFocusMoved(handler: EventListener<Node>) {
+  onFocusMoved(handler: EventListener<GridNode>) {
     this.focusMovedEvent.addListener(handler);
   }
 
-  getContentById(contentId: number): ContentType {
+  getContentById(contentId: number): ContentType | undefined {
     return this.contentContainerMap[contentId].getContent();
   }
 
-  getFocusedNode(): Node {
+  getFocusedNode(): GridNode {
     return this.focusedNode;
   }
 
-  setFocus(node: Node) {
-    this.focusedNode = node;
+  setFocus(nodeOrContentId: GridNode | number) {
+    if (!nodeOrContentId) {
+      return;
+    }
+    if ("getParent" in (nodeOrContentId as any)) {
+      this.focusedNode = nodeOrContentId as GridNode;
+      this.focusMovedEvent.fire(this.focusedNode);
+    } else {
+      const node = this.contentContainerMap[nodeOrContentId as number];
+      if (node) {
+        this.setFocus(node);
+      }
+    }
   }
 
   moveFocus(direction: Direction) {
