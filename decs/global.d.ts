@@ -5,7 +5,7 @@ interface Identifiable {
 }
 
 // @ts-ignore
-interface Iterable {
+interface PhoenixIterable {
   next: () => object;
   previous: () => object;
 }
@@ -116,7 +116,7 @@ declare class Rectangle {
 
 // @ts-ignore
 // noinspection JSAnnotator
-declare class PhoenixScreen implements Identifiable, Iterable {
+declare class PhoenixScreen implements Identifiable, PhoenixIterable {
   static main: () => PhoenixScreen;
   static all: () => PhoenixScreen[];
 
@@ -144,7 +144,7 @@ declare class Size {
 
 // @ts-ignore
 // noinspection JSAnnotator
-declare class Space implements Identifiable, Iterable {
+declare class Space implements Identifiable, PhoenixIterable {
   static active: () => Space; // macOS 10.11+
   static all: () => Space[]; // macOS 10.11+
 
@@ -210,7 +210,6 @@ declare class PhoenixWindow implements Identifiable {
   isEqual(anything: object): boolean;
 }
 
-// @ts-ignore
 declare type Window = PhoenixWindow;
 
 declare class PhoenixStorage {
